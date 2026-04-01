@@ -93,47 +93,38 @@ No build tools. No frameworks. No backend. One file.
 
 ```
 orbs-agent/
-├── index.html      # Entire application — 2800+ lines
-└── README.md
-```
-
-### Inside `index.html`
-
-```
-<head>
-  ├── Tailwind config (custom colors + fonts)
-  └── Custom CSS (~1000 lines)
-      ├── Design tokens (CSS variables)
-      ├── Navigation
-      ├── Hero, sections, roadmap, CTA, footer
-      ├── API modal styles
-      └── Whitepaper / newspaper styles
-
-<body>
-  ├── Custom cursor (div#cursor + div#cursorGlow)
-  ├── Navigation (sticky, glassmorphism)
-  ├── Hero section
-  ├── Marquee ticker
-  ├── Problem section
-  ├── How It Works section
-  ├── Roadmap section
-  ├── CTA section
-  ├── Footer
-  ├── Whitepaper modal (div#wpOverlay)
-  ├── API Reference modal (div#apiOverlay)
-  └── <script>
-      ├── Cursor animation (RAF loop)
-      ├── IntersectionObserver (fade-in)
-      ├── Whitepaper modal open/close + TOC scroll
-      ├── API modal open/close
-      ├── Endpoint sidebar switching
-      ├── Response tab switching
-      └── Copy-to-clipboard
+├── index.html            # Entire application — 2800+ lines
+├── README.md             # This file
+├── .env.example          # Environment variables template
+├── .gitignore            # Git ignore rules
+├── package.json          # Project metadata & npm scripts
+├── package-lock.json     # Dependency lock file
+├── ecosystem.config.js   # PM2 process manager config
+├── nginx.conf            # Nginx web server config
+├── deploy.sh             # Automated deployment script
+└── tasks/                # Project documentation
+    ├── setup/
+    │   ├── project-initialization.md
+    │   └── technology-stack.md
+    ├── design/
+    │   └── design-system.md
+    ├── html/
+    │   └── html-structure.md
+    ├── css/
+    │   └── css-architecture.md
+    ├── javascript/
+    │   └── javascript-logic.md
+    ├── ui-components/
+    │   └── ui-components.md
+    ├── modals/
+    │   └── modals.md
+    └── deployment/
+        └── deployment.md
 ```
 
 ---
 
-## API Reference (Fake / Demo)
+## API Reference (Demo)
 
 The built-in API docs cover these endpoints:
 
@@ -176,7 +167,7 @@ The built-in API docs cover these endpoints:
 
 ```bash
 # Clone the repo
-git clone https://github.com/YOUR_USERNAME/orbs-agent.git
+git clone https://github.com/aeonproject-cpu/OrbsAgent.git
 
 # Open in browser
 open index.html
@@ -184,6 +175,21 @@ open index.html
 # Or serve with any static server
 npx serve .
 python3 -m http.server 8080
+```
+
+---
+
+## Deployment
+
+```bash
+# Vercel
+vercel --prod
+
+# Netlify
+netlify deploy --prod --dir .
+
+# Custom server
+bash deploy.sh
 ```
 
 ---
