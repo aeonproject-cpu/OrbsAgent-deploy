@@ -1,0 +1,55 @@
+{
+  "name": "orbs-agent",
+  "version": "1.0.0",
+  "description": "On-chain identity and reputation layer for AI agents — landing page",
+  "author": "Orbs Agent Team <hello@orbsagent.xyz>",
+  "license": "MIT",
+  "private": false,
+  "homepage": "https://orbsagent.xyz",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/orbs-agent.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/orbs-agent/issues"
+  },
+  "keywords": [
+    "ai-agents",
+    "blockchain",
+    "reputation",
+    "identity",
+    "orbs",
+    "crypto",
+    "defi",
+    "web3",
+    "landing-page"
+  ],
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "scripts": {
+    "dev": "npx serve . --listen 3000",
+    "start": "npx serve . --listen 3000",
+    "build": "echo 'Static site — no build step required'",
+    "preview": "npx serve . --listen 4000",
+    "lint": "npx htmlhint index.html",
+    "format": "prettier --write index.html",
+    "deploy": "bash deploy.sh",
+    "deploy:vercel": "vercel --prod",
+    "deploy:netlify": "netlify deploy --prod --dir .",
+    "validate": "npx html-validate index.html"
+  },
+  "devDependencies": {
+    "prettier": "^3.2.5",
+    "htmlhint": "^1.1.4",
+    "html-validate": "^9.0.0",
+    "serve": "^14.2.3"
+  },
+  "browserslist": [
+    "last 2 Chrome versions",
+    "last 2 Firefox versions",
+    "last 2 Safari versions",
+    "last 2 Edge versions"
+  ]
+}

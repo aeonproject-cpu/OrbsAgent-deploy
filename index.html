@@ -1,0 +1,2809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ORB.S AGENT — The Reputation Protocol</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'black-deep': '#050505',
+            'black-secondary': '#0a0a0a',
+            'neon-pink': '#ff007a',
+            'text-primary': '#eaeaea',
+            'text-secondary': '#888',
+          },
+          fontFamily: {
+            serif: ['"Playfair Display"', 'Georgia', 'serif'],
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --pink: #ff007a;
+      --pink-glow: rgba(255,0,122,0.3);
+      --border: rgba(255,255,255,0.08);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background-color: #050505;
+      color: #eaeaea;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* Custom Cursor */
+    .cursor {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--pink);
+      position: fixed;
+      top: 0; left: 0;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+      transition: width 0.2s ease, height 0.2s ease, opacity 0.2s ease;
+      mix-blend-mode: screen;
+    }
+
+    .cursor-glow {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255,0,122,0.15);
+      position: fixed;
+      top: 0; left: 0;
+      pointer-events: none;
+      z-index: 9998;
+      transform: translate(-50%, -50%);
+      filter: blur(8px);
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 2px; }
+    ::-webkit-scrollbar-track { background: #050505; }
+    ::-webkit-scrollbar-thumb { background: var(--pink); }
+
+    /* Nav */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: rgba(5,5,5,0.92);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-inner {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 0 48px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-family: 'Inter', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 0.25em;
+      color: #eaeaea;
+      text-decoration: none;
+    }
+
+    .logo span { color: var(--pink); }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 40px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #888;
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .nav-links a:hover { color: #eaeaea; }
+
+    .btn-pink {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 24px;
+      background: var(--pink);
+      color: #050505;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      text-decoration: none;
+      border: none;
+      cursor: none;
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    .btn-pink:hover {
+      box-shadow: 0 0 32px var(--pink-glow), 0 0 8px var(--pink);
+      transform: translateY(-1px);
+    }
+
+    .btn-outline {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 24px;
+      background: transparent;
+      color: #eaeaea;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      text-decoration: none;
+      border: 1px solid rgba(255,255,255,0.2);
+      cursor: none;
+      transition: border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn-outline:hover {
+      border-color: var(--pink);
+      color: var(--pink);
+      box-shadow: 0 0 20px rgba(255,0,122,0.1);
+    }
+
+    /* Hero */
+    .hero {
+      min-height: 100vh;
+      padding-top: 64px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      max-width: 1440px;
+      margin: 0 auto;
+      padding-left: 48px;
+      padding-right: 48px;
+      align-items: center;
+      gap: 80px;
+    }
+
+    .hero-left { padding: 80px 0; }
+
+    .hero-eyebrow {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 32px;
+    }
+
+    .hero-headline {
+      font-family: 'Playfair Display', serif;
+      font-weight: 900;
+      font-size: clamp(72px, 7vw, 112px);
+      line-height: 0.92;
+      letter-spacing: -0.02em;
+      color: #eaeaea;
+    }
+
+    .hero-headline .pink-italic {
+      font-style: italic;
+      color: var(--pink);
+    }
+
+    .hero-right {
+      padding: 80px 0;
+      padding-left: 40px;
+      border-left: 1px solid var(--border);
+    }
+
+    .hero-body {
+      font-size: 17px;
+      line-height: 1.8;
+      color: #888;
+      margin-bottom: 48px;
+    }
+
+    .hero-body strong { color: #eaeaea; font-weight: 600; }
+
+    .hero-buttons { display: flex; gap: 16px; align-items: center; }
+
+    /* Section basics */
+    .section-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--pink);
+      margin-bottom: 24px;
+    }
+
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-weight: 900;
+      font-size: clamp(40px, 4vw, 64px);
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      color: #eaeaea;
+      margin-bottom: 48px;
+    }
+
+    .section-title .pink-italic {
+      font-style: italic;
+      color: var(--pink);
+    }
+
+    .hr-pink {
+      border: none;
+      height: 1px;
+      background: linear-gradient(90deg, var(--pink), transparent);
+      margin-bottom: 24px;
+      width: 60px;
+    }
+
+    .dot-accent {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--pink);
+      margin-right: 8px;
+      vertical-align: middle;
+      box-shadow: 0 0 8px var(--pink);
+    }
+
+    /* Background grid */
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+    }
+
+    /* Marquee */
+    .marquee-wrapper {
+      overflow: hidden;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 18px 0;
+      background: #0a0a0a;
+    }
+
+    .marquee-track {
+      display: flex;
+      animation: marquee 30s linear infinite;
+      white-space: nowrap;
+    }
+
+    .marquee-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 40px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #888;
+      flex-shrink: 0;
+    }
+
+    .marquee-sep { color: var(--pink); }
+
+    @keyframes marquee {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    /* Problem */
+    .problem-section {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 120px 48px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: start;
+    }
+
+    .problem-columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 32px;
+    }
+
+    .problem-col-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #eaeaea;
+      margin-bottom: 12px;
+    }
+
+    .problem-col-text {
+      font-size: 14px;
+      line-height: 1.7;
+      color: #888;
+    }
+
+    .problem-right {
+      padding-left: 40px;
+      border-left: 1px solid var(--border);
+    }
+
+    .stat-item {
+      padding: 32px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .stat-item:first-child { padding-top: 0; }
+    .stat-item:last-child { border-bottom: none; }
+
+    .stat-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 12px;
+    }
+
+    .stat-value {
+      font-family: 'Playfair Display', serif;
+      font-size: 56px;
+      font-weight: 900;
+      color: var(--pink);
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .stat-desc { font-size: 13px; color: #888; }
+
+    /* How it works */
+    .how-section {
+      background: #0a0a0a;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .how-inner {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 120px 48px;
+    }
+
+    .how-header { text-align: center; margin-bottom: 80px; }
+
+    .how-title {
+      font-family: 'Playfair Display', serif;
+      font-weight: 900;
+      font-size: clamp(32px, 3.5vw, 52px);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      color: #eaeaea;
+    }
+
+    .how-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+    }
+
+    .how-card {
+      background: #050505;
+      padding: 48px 36px;
+      transition: background 0.3s ease, transform 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .how-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: var(--pink);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.4s ease;
+    }
+
+    .how-card:hover::before { transform: scaleX(1); }
+    .how-card:hover { background: #0d0d0d; transform: translateY(-4px); }
+
+    .how-number {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.3em;
+      color: var(--pink);
+      text-transform: uppercase;
+      margin-bottom: 32px;
+    }
+
+    .how-card-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: #eaeaea;
+      margin-bottom: 16px;
+    }
+
+    .how-card-text {
+      font-size: 14px;
+      line-height: 1.7;
+      color: #888;
+    }
+
+    /* Roadmap */
+    .roadmap-section {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 120px 48px;
+    }
+
+    .roadmap-header { margin-bottom: 80px; }
+
+    .roadmap-timeline { position: relative; }
+
+    .roadmap-timeline::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 8px;
+      bottom: 8px;
+      width: 1px;
+      background: var(--border);
+    }
+
+    .roadmap-item {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 48px;
+      padding: 48px 0 48px 40px;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+
+    .roadmap-item:last-child { border-bottom: none; }
+
+    .roadmap-item::before {
+      content: '';
+      position: absolute;
+      left: -4px;
+      top: 56px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #444;
+      border: 1px solid var(--border);
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .roadmap-item:hover::before,
+    .roadmap-item.active::before {
+      background: var(--pink);
+      box-shadow: 0 0 16px var(--pink);
+    }
+
+    .roadmap-phase {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: #888;
+      padding-top: 4px;
+    }
+
+    .roadmap-phase.active { color: var(--pink); }
+
+    .roadmap-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 32px;
+      font-weight: 700;
+      color: #eaeaea;
+      margin-bottom: 12px;
+    }
+
+    .roadmap-desc { font-size: 14px; line-height: 1.7; color: #888; }
+
+    /* CTA */
+    .cta-section {
+      background: #0a0a0a;
+      border-top: 1px solid var(--border);
+    }
+
+    .cta-inner {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 140px 48px;
+      text-align: center;
+    }
+
+    .cta-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 32px;
+    }
+
+    .cta-title {
+      font-family: 'Playfair Display', serif;
+      font-weight: 900;
+      font-size: clamp(40px, 5vw, 80px);
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      color: #eaeaea;
+      margin-bottom: 56px;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .cta-title .pink-italic { font-style: italic; color: var(--pink); }
+
+    .cta-buttons { display: flex; gap: 16px; justify-content: center; align-items: center; }
+
+    /* Footer */
+    footer { border-top: 1px solid var(--border); }
+
+    .footer-inner {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 40px 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-copy { font-size: 12px; color: #888; letter-spacing: 0.05em; }
+
+    .footer-links { display: flex; gap: 32px; list-style: none; }
+
+    .footer-links a {
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #888;
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .footer-links a:hover { color: var(--pink); }
+
+    /* Fade animations */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+
+    .fade-in.visible { opacity: 1; transform: translateY(0); }
+    .fade-in-delay-1 { transition-delay: 0.1s; }
+    .fade-in-delay-2 { transition-delay: 0.2s; }
+    .fade-in-delay-3 { transition-delay: 0.3s; }
+    .fade-in-delay-4 { transition-delay: 0.4s; }
+
+    /* Noise overlay */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 500;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .hero { grid-template-columns: 1fr; gap: 40px; padding-top: 100px; }
+      .hero-right { border-left: none; border-top: 1px solid var(--border); padding-left: 0; padding-top: 40px; }
+      .problem-section { grid-template-columns: 1fr; }
+      .problem-right { border-left: none; border-top: 1px solid var(--border); padding-left: 0; padding-top: 40px; }
+      .how-grid { grid-template-columns: 1fr 1fr; }
+      .roadmap-item { grid-template-columns: 1fr; gap: 8px; }
+    }
+
+    @media (max-width: 768px) {
+      .nav-inner { padding: 0 24px; }
+      .nav-links li:not(:last-child) { display: none; }
+      .hero,
+      .problem-section { padding-left: 24px; padding-right: 24px; }
+      .how-inner, .roadmap-section, .cta-inner, .footer-inner { padding-left: 24px; padding-right: 24px; }
+      .how-grid { grid-template-columns: 1fr; }
+      .problem-columns { grid-template-columns: 1fr; }
+      .cta-buttons { flex-direction: column; }
+      .footer-inner { flex-direction: column; gap: 24px; text-align: center; }
+    }
+
+    /* ── API MODAL ─────────────────────────────── */
+    .api-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: rgba(5,5,5,0.98);
+      backdrop-filter: blur(24px);
+      display: none;
+      flex-direction: column;
+    }
+
+    .api-overlay.open { display: flex; }
+
+    .api-topbar {
+      height: 64px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      flex-shrink: 0;
+    }
+
+    .api-topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .api-badge {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      background: rgba(255,0,122,0.12);
+      color: var(--pink);
+      border: 1px solid rgba(255,0,122,0.25);
+      padding: 4px 10px;
+    }
+
+    .api-version {
+      font-size: 11px;
+      color: #555;
+      letter-spacing: 0.1em;
+    }
+
+    .api-close {
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: #888;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: none;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .api-close:hover { color: #eaeaea; border-color: rgba(255,255,255,0.2); }
+
+    .api-body {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* Sidebar */
+    .api-sidebar {
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 32px 0;
+    }
+
+    .api-sidebar::-webkit-scrollbar { width: 2px; }
+    .api-sidebar::-webkit-scrollbar-thumb { background: #222; }
+
+    .api-sidebar-section {
+      margin-bottom: 8px;
+    }
+
+    .api-sidebar-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: #444;
+      padding: 8px 28px 8px;
+    }
+
+    .api-endpoint-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 10px 28px;
+      background: transparent;
+      border: none;
+      cursor: none;
+      text-align: left;
+      transition: background 0.15s;
+    }
+
+    .api-endpoint-btn:hover { background: rgba(255,255,255,0.03); }
+    .api-endpoint-btn.active { background: rgba(255,0,122,0.06); }
+    .api-endpoint-btn.active .api-ep-path { color: #eaeaea; }
+
+    .method-badge {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      padding: 2px 6px;
+      flex-shrink: 0;
+      min-width: 36px;
+      text-align: center;
+    }
+
+    .method-get { background: rgba(0,200,100,0.12); color: #00c864; border: 1px solid rgba(0,200,100,0.2); }
+    .method-post { background: rgba(100,130,255,0.12); color: #6482ff; border: 1px solid rgba(100,130,255,0.2); }
+    .method-delete { background: rgba(255,80,80,0.12); color: #ff5050; border: 1px solid rgba(255,80,80,0.2); }
+    .method-patch { background: rgba(255,180,0,0.12); color: #ffb400; border: 1px solid rgba(255,180,0,0.2); }
+
+    .api-ep-path {
+      font-size: 12px;
+      font-family: 'Courier New', monospace;
+      color: #666;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Main content */
+    .api-main {
+      overflow-y: auto;
+      padding: 48px 56px;
+    }
+
+    .api-main::-webkit-scrollbar { width: 2px; }
+    .api-main::-webkit-scrollbar-thumb { background: #222; }
+
+    .api-panel { display: none; }
+    .api-panel.active { display: block; }
+
+    .api-endpoint-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    .api-endpoint-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: #eaeaea;
+    }
+
+    .api-endpoint-desc {
+      font-size: 14px;
+      line-height: 1.8;
+      color: #888;
+      margin-bottom: 40px;
+      max-width: 640px;
+    }
+
+    .api-url-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #0a0a0a;
+      border: 1px solid var(--border);
+      padding: 14px 20px;
+      margin-bottom: 40px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+    }
+
+    .api-url-method {
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 0.05em;
+    }
+
+    .api-url-text { color: #888; }
+    .api-url-text .param { color: var(--pink); }
+    .api-url-text .base { color: #555; }
+
+    .api-section-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: #555;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .api-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 40px;
+      font-size: 13px;
+    }
+
+    .api-table th {
+      text-align: left;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #444;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .api-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      vertical-align: top;
+      line-height: 1.5;
+    }
+
+    .api-table td:first-child {
+      font-family: 'Courier New', monospace;
+      color: var(--pink);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .api-table td:nth-child(2) {
+      color: #6482ff;
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+    }
+
+    .api-table td:nth-child(3) { color: #888; }
+
+    .api-table .required {
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      background: rgba(255,0,122,0.1);
+      color: var(--pink);
+      padding: 1px 6px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+
+    .api-table .optional {
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      background: rgba(255,255,255,0.04);
+      color: #555;
+      padding: 1px 6px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+
+    .code-block {
+      background: #080808;
+      border: 1px solid var(--border);
+      padding: 0;
+      margin-bottom: 40px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .code-block-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      border-bottom: 1px solid var(--border);
+      background: #0a0a0a;
+    }
+
+    .code-block-lang {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #555;
+    }
+
+    .code-copy-btn {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #555;
+      background: none;
+      border: none;
+      cursor: none;
+      transition: color 0.2s;
+    }
+
+    .code-copy-btn:hover { color: #eaeaea; }
+
+    .code-block pre {
+      padding: 24px 20px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      line-height: 1.8;
+      color: #888;
+      overflow-x: auto;
+    }
+
+    .code-block pre .key { color: #6482ff; }
+    .code-block pre .str { color: #a8d8a8; }
+    .code-block pre .num { color: #ffb400; }
+    .code-block pre .bool { color: var(--pink); }
+    .code-block pre .comment { color: #444; }
+    .code-block pre .method-c { color: #00c864; }
+    .code-block pre .url-c { color: #888; }
+    .code-block pre .header-c { color: #6482ff; }
+    .code-block pre .val-c { color: #a8d8a8; }
+
+    .api-response-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 0;
+    }
+
+    .api-resp-tab {
+      padding: 10px 20px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: #555;
+      cursor: none;
+      border-bottom: 2px solid transparent;
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .api-resp-tab.active { color: #eaeaea; border-bottom-color: var(--pink); }
+    .api-resp-tab:hover:not(.active) { color: #aaa; }
+
+    .resp-panel { display: none; }
+    .resp-panel.active { display: block; }
+
+    .api-two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+
+    .api-info-card {
+      background: #0a0a0a;
+      border: 1px solid var(--border);
+      padding: 24px;
+    }
+
+    .api-info-card-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: #444;
+      margin-bottom: 12px;
+    }
+
+    .api-info-card-value {
+      font-size: 13px;
+      color: #888;
+      line-height: 1.6;
+    }
+
+    .api-info-card-value code {
+      font-family: 'Courier New', monospace;
+      color: #6482ff;
+      font-size: 12px;
+    }
+
+    /* status dots */
+    .status-dot {
+      display: inline-block;
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      margin-right: 6px;
+    }
+
+    .status-dot.green { background: #00c864; box-shadow: 0 0 6px #00c864; }
+    .status-dot.yellow { background: #ffb400; box-shadow: 0 0 6px #ffb400; }
+    .status-dot.red { background: #ff5050; box-shadow: 0 0 6px #ff5050; }
+
+    @media (max-width: 900px) {
+      .api-body { grid-template-columns: 1fr; }
+      .api-sidebar { display: none; }
+      .api-main { padding: 32px 24px; }
+      .api-two-col { grid-template-columns: 1fr; }
+    }
+
+    /* ── WHITEPAPER / NEWSPAPER MODAL ─────────────── */
+    .wp-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 210;
+      background: #050505;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .wp-overlay.open { display: flex; }
+
+    .wp-nav {
+      height: 56px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 48px;
+      flex-shrink: 0;
+      background: rgba(5,5,5,0.96);
+      backdrop-filter: blur(20px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .wp-nav-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .wp-nav-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: #555;
+    }
+
+    .wp-nav-sep {
+      width: 1px;
+      height: 16px;
+      background: var(--border);
+    }
+
+    .wp-toc {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .wp-toc a {
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #555;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .wp-toc a:hover { color: #eaeaea; }
+
+    .wp-close {
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: #666;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: none;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .wp-close:hover { color: #eaeaea; border-color: rgba(255,255,255,0.2); }
+
+    /* Paper body */
+    .wp-body {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .wp-body::-webkit-scrollbar { width: 2px; }
+    .wp-body::-webkit-scrollbar-thumb { background: #222; }
+
+    .wp-paper {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 56px 48px 100px;
+    }
+
+    /* Masthead */
+    .wp-masthead {
+      text-align: center;
+      padding-bottom: 28px;
+      margin-bottom: 0;
+    }
+
+    .wp-rule-double {
+      border: none;
+      border-top: 3px double rgba(255,255,255,0.2);
+      margin-bottom: 20px;
+    }
+
+    .wp-rule-single {
+      border: none;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .wp-rule-pink {
+      border: none;
+      border-top: 1px solid var(--pink);
+      opacity: 0.5;
+    }
+
+    .wp-edition-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #555;
+      margin-bottom: 16px;
+    }
+
+    .wp-title {
+      font-family: 'Playfair Display', serif;
+      font-weight: 900;
+      font-size: clamp(52px, 7vw, 96px);
+      line-height: 0.9;
+      letter-spacing: -0.02em;
+      color: #eaeaea;
+      margin-bottom: 12px;
+    }
+
+    .wp-subtitle {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: clamp(16px, 2vw, 24px);
+      color: #666;
+      letter-spacing: 0.05em;
+      margin-bottom: 20px;
+    }
+
+    .wp-meta-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 24px;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #555;
+    }
+
+    .wp-meta-row .pink { color: var(--pink); }
+
+    /* Lede / abstract block */
+    .wp-lede-row {
+      display: grid;
+      grid-template-columns: 1fr 2px 2fr;
+      gap: 32px;
+      padding: 36px 0;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      margin: 28px 0;
+      align-items: start;
+    }
+
+    .wp-lede-sep { background: rgba(255,255,255,0.08); }
+
+    .wp-kicker {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--pink);
+      margin-bottom: 12px;
+    }
+
+    .wp-lede-headline {
+      font-family: 'Playfair Display', serif;
+      font-weight: 900;
+      font-size: clamp(26px, 3vw, 40px);
+      line-height: 1.05;
+      color: #eaeaea;
+      letter-spacing: -0.01em;
+    }
+
+    .wp-lede-body {
+      font-size: 15px;
+      line-height: 1.85;
+      color: #888;
+    }
+
+    .wp-lede-body p + p { margin-top: 1em; }
+
+    /* Drop cap */
+    .wp-dropcap::first-letter {
+      font-family: 'Playfair Display', serif;
+      font-size: 4.8em;
+      font-weight: 900;
+      float: left;
+      line-height: 0.75;
+      margin-right: 8px;
+      margin-top: 6px;
+      color: var(--pink);
+    }
+
+    /* Section heading newspaper style */
+    .wp-section {
+      margin: 48px 0 0;
+    }
+
+    .wp-section-head {
+      border-top: 3px solid rgba(255,255,255,0.15);
+      padding-top: 14px;
+      margin-bottom: 24px;
+    }
+
+    .wp-section-num {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: #555;
+      margin-bottom: 6px;
+    }
+
+    .wp-section-title {
+      font-family: 'Playfair Display', serif;
+      font-weight: 900;
+      font-size: clamp(22px, 3vw, 36px);
+      line-height: 1.05;
+      color: #eaeaea;
+      letter-spacing: -0.01em;
+    }
+
+    /* Body columns */
+    .wp-columns-2 {
+      column-count: 2;
+      column-gap: 40px;
+      column-rule: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .wp-columns-3 {
+      column-count: 3;
+      column-gap: 32px;
+      column-rule: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .wp-body-text {
+      font-size: 14px;
+      line-height: 1.85;
+      color: #888;
+      text-align: justify;
+      hyphens: auto;
+    }
+
+    .wp-body-text p + p { margin-top: 0.9em; }
+
+    .wp-body-text strong { color: #ccc; font-weight: 600; }
+
+    /* Pull quote */
+    .wp-pullquote {
+      border-top: 2px solid rgba(255,255,255,0.15);
+      border-bottom: 2px solid rgba(255,255,255,0.15);
+      padding: 20px 0;
+      margin: 28px 0;
+      break-inside: avoid;
+    }
+
+    .wp-pullquote p {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 19px;
+      line-height: 1.4;
+      color: #eaeaea;
+      text-align: center;
+    }
+
+    .wp-pullquote .pink-italic { color: var(--pink); }
+
+    /* Inline callout box */
+    .wp-callout {
+      border-left: 2px solid var(--pink);
+      padding: 16px 20px;
+      margin: 24px 0;
+      background: rgba(255,0,122,0.04);
+      break-inside: avoid;
+    }
+
+    .wp-callout p {
+      font-size: 13px;
+      line-height: 1.7;
+      color: #888;
+    }
+
+    .wp-callout strong { color: #eaeaea; }
+
+    /* Stats row in newspaper */
+    .wp-stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.06);
+      margin: 36px 0;
+    }
+
+    .wp-stat-cell {
+      background: #050505;
+      padding: 28px 20px;
+      text-align: center;
+    }
+
+    .wp-stat-cell-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 36px;
+      font-weight: 900;
+      color: var(--pink);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .wp-stat-cell-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #555;
+    }
+
+    /* Token table */
+    .wp-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin: 24px 0 32px;
+    }
+
+    .wp-table th {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #555;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      text-align: left;
+    }
+
+    .wp-table td {
+      padding: 13px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      color: #888;
+      line-height: 1.5;
+    }
+
+    .wp-table td:first-child {
+      font-family: 'Playfair Display', serif;
+      font-weight: 700;
+      color: #eaeaea;
+      font-size: 14px;
+    }
+
+    .wp-table td .pct {
+      font-family: 'Courier New', monospace;
+      color: var(--pink);
+      font-size: 12px;
+    }
+
+    /* Architecture diagram (text-based) */
+    .wp-arch-block {
+      background: #080808;
+      border: 1px solid rgba(255,255,255,0.06);
+      padding: 28px 32px;
+      margin: 24px 0;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      line-height: 2;
+      color: #666;
+    }
+
+    .wp-arch-block .arch-title { color: #eaeaea; font-weight: bold; }
+    .wp-arch-block .arch-pink  { color: var(--pink); }
+    .wp-arch-block .arch-blue  { color: #6482ff; }
+    .wp-arch-block .arch-green { color: #00c864; }
+
+    /* Running footer */
+    .wp-footer-rule {
+      border-top: 1px solid rgba(255,255,255,0.1);
+      margin-top: 64px;
+      padding-top: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #444;
+    }
+
+    /* Responsive newspaper */
+    @media (max-width: 900px) {
+      .wp-paper { padding: 32px 24px 80px; }
+      .wp-columns-2, .wp-columns-3 { column-count: 1; }
+      .wp-lede-row { grid-template-columns: 1fr; }
+      .wp-lede-sep { display: none; }
+      .wp-stats-row { grid-template-columns: 1fr 1fr; }
+      .wp-nav { padding: 0 24px; }
+      .wp-toc { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Cursor -->
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-glow" id="cursorGlow"></div>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-inner">
+      <a href="#" class="logo">ORBS &nbsp;&nbsp;AGENT</a>
+      <ul class="nav-links">
+        <li><a href="#how">Explorer</a></li>
+        <li><a href="#" id="docsBtn">Docs</a></li>
+        <li><a href="#problem">Manifesto</a></li>
+        <li><a href="https://github.com" target="_blank" rel="noopener">Github</a></li>
+        <li><a href="#" id="apiBtn" class="btn-outline" style="padding:8px 20px; font-size:11px; border-color:rgba(255,255,255,0.15);">API</a></li>
+        <li><a href="#cta" class="btn-pink">BUY ORBS</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section style="background:#050505; position:relative; overflow:hidden;">
+    <div class="bg-grid"></div>
+    <div style="position:absolute; top:20%; right:20%; width:700px; height:700px; background:radial-gradient(circle, rgba(255,0,122,0.05) 0%, transparent 70%); pointer-events:none;"></div>
+
+    <div class="hero">
+      <div class="hero-left">
+        <p class="hero-eyebrow fade-in">
+          <span class="dot-accent"></span>EST. 2026 &nbsp;—&nbsp; THE REPUTATION PROTOCOL
+        </p>
+        <h1 class="hero-headline fade-in fade-in-delay-1">
+          ORBS<br/><span class="pink-italic">AGENT</span>
+        </h1>
+      </div>
+
+      <div class="hero-right fade-in fade-in-delay-2">
+        <hr class="hr-pink" />
+        <p class="hero-body">
+          AI agents are already everywhere.<br/>
+          Trading your money. Managing positions.<br/>
+          Executing on your behalf.<br/><br/>
+          Every single one — anonymous, disposable, unaccountable.<br/><br/>
+          An agent fails — it disappears. No history. No reputation.<br/><br/>
+          <strong>Orbs Agent is the fix.</strong><br/>
+          On-chain identity and reputation layer for AI agents.<br/>
+          Verify before you trust. Stake against behavior.<br/>
+          Make trust programmable.
+        </p>
+        <div class="hero-buttons">
+          <a href="#cta" class="btn-pink">BUY ORBS</a>
+          <a href="#problem" class="btn-outline">READ MORE</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Marquee -->
+  <div class="marquee-wrapper">
+    <div class="marquee-track">
+      <span class="marquee-item">On-Chain Identity <span class="marquee-sep">✦</span></span>
+      <span class="marquee-item">Reputation Protocol <span class="marquee-sep">✦</span></span>
+      <span class="marquee-item">Stake Against Behavior <span class="marquee-sep">✦</span></span>
+      <span class="marquee-item">Verify Before You Trust <span class="marquee-sep">✦</span></span>
+      <span class="marquee-item">Agent Registry <span class="marquee-sep">✦</span></span>
+      <span class="marquee-item">Trust Infrastructure <span class="marquee-sep">✦</span></span>
+      <span class="marquee-item">ORBS Token <span class="marquee-sep">✦</span></span>
+      <span class="marquee-item">Programmable Trust <span class="marquee-sep">✦</span></span>
+      <span class="marquee-item">On-Chain Identity <span class="marquee-sep">✦</span></span>
+      <span class="marquee-item">Reputation Protocol <span class="marquee-sep">✦</span></span>
+      <span class="marquee-item">Stake Against Behavior <span class="marquee-sep">✦</span></span>
+      <span class="marquee-item">Verify Before You Trust <span class="marquee-sep">✦</span></span>
+      <span class="marquee-item">Agent Registry <span class="marquee-sep">✦</span></span>
+      <span class="marquee-item">Trust Infrastructure <span class="marquee-sep">✦</span></span>
+      <span class="marquee-item">ORBS Token <span class="marquee-sep">✦</span></span>
+      <span class="marquee-item">Programmable Trust <span class="marquee-sep">✦</span></span>
+    </div>
+  </div>
+
+  <!-- Problem Section -->
+  <section id="problem" style="background:#050505; position:relative;">
+    <div class="problem-section">
+
+      <div class="problem-left">
+        <p class="section-label fade-in">01 — The Problem</p>
+        <h2 class="section-title fade-in fade-in-delay-1">
+          The Agent Economy<br/>Is Running on<br/><span class="pink-italic">Blind Faith</span>
+        </h2>
+        <div class="problem-columns">
+          <div class="fade-in fade-in-delay-1">
+            <p class="problem-col-title">Anonymous</p>
+            <p class="problem-col-text">Every agent operating today is an identity black hole. No origin, no owner, no accountability structure.</p>
+          </div>
+          <div class="fade-in fade-in-delay-2">
+            <p class="problem-col-title">Disposable</p>
+            <p class="problem-col-text">When an agent fails or drains your funds — it vanishes. No history. No consequence. No recourse.</p>
+          </div>
+          <div class="fade-in fade-in-delay-3">
+            <p class="problem-col-title">Unverifiable</p>
+            <p class="problem-col-text">You cannot audit what you cannot identify. The agent economy scales blind trust, at machine speed.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="problem-right fade-in fade-in-delay-2">
+        <div class="stat-item">
+          <p class="stat-label">Current State</p>
+          <p class="stat-value">0</p>
+          <p class="stat-desc">agent identity standards in existence today</p>
+        </div>
+        <div class="stat-item">
+          <p class="stat-label">The Problem</p>
+          <p class="stat-value">$0</p>
+          <p class="stat-desc">accountability when an autonomous agent fails</p>
+        </div>
+        <div class="stat-item">
+          <p class="stat-label">The Scale</p>
+          <p class="stat-value">∞</p>
+          <p class="stat-desc">agents operating daily with zero verified identity</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section id="how" class="how-section">
+    <div class="how-inner">
+      <div class="how-header">
+        <p class="section-label fade-in">02 — The Protocol</p>
+        <h2 class="how-title fade-in fade-in-delay-1">
+          Not a dashboard. Not a whitepaper.<br/>
+          <span style="color:#888; font-style:italic;">Infrastructure.</span>
+        </h2>
+      </div>
+      <div class="how-grid">
+        <div class="how-card fade-in">
+          <p class="how-number">01 — Register</p>
+          <h3 class="how-card-title">Register</h3>
+          <p class="how-card-text">Agents claim a permanent on-chain identity. Immutable. Verifiable. Tied to behavior from day one.</p>
+        </div>
+        <div class="how-card fade-in fade-in-delay-1">
+          <p class="how-number">02 — Track</p>
+          <h3 class="how-card-title">Track</h3>
+          <p class="how-card-text">Every transaction, action, and decision is recorded. Reputation is built in real-time from verifiable history.</p>
+        </div>
+        <div class="how-card fade-in fade-in-delay-2">
+          <p class="how-number">03 — Stake</p>
+          <h3 class="how-card-title">Stake</h3>
+          <p class="how-card-text">Agents stake ORBS tokens as collateral against their behavior. Skin in the game. Accountability enforced on-chain.</p>
+        </div>
+        <div class="how-card fade-in fade-in-delay-3">
+          <p class="how-number">04 — Query</p>
+          <h3 class="how-card-title">Query</h3>
+          <p class="how-card-text">Any application can query trust scores via API. Integrate reputation into any protocol, wallet, or interface.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Roadmap -->
+  <section id="roadmap" style="background:#050505; border-top:1px solid var(--border);">
+    <div class="roadmap-section">
+      <div class="roadmap-header">
+        <p class="section-label fade-in">03 — Roadmap</p>
+        <h2 class="section-title fade-in fade-in-delay-1" style="margin-bottom:0;">
+          The Path to<br/><span class="pink-italic">Standard.</span>
+        </h2>
+      </div>
+      <div class="roadmap-timeline">
+
+        <div class="roadmap-item active fade-in">
+          <div><p class="roadmap-phase active">Phase 1</p></div>
+          <div>
+            <h3 class="roadmap-title">Launch</h3>
+            <p class="roadmap-desc">ORBS token goes live. Community assembles. The foundation of a new trust layer is laid. Early adopters shape the protocol from genesis.</p>
+          </div>
+        </div>
+
+        <div class="roadmap-item fade-in fade-in-delay-1">
+          <div><p class="roadmap-phase">Phase 2</p></div>
+          <div>
+            <h3 class="roadmap-title">Registry</h3>
+            <p class="roadmap-desc">Agent identity system goes live. Any AI agent can register a permanent on-chain identity. The namespace of trust is born.</p>
+          </div>
+        </div>
+
+        <div class="roadmap-item fade-in fade-in-delay-2">
+          <div><p class="roadmap-phase">Phase 3</p></div>
+          <div>
+            <h3 class="roadmap-title">Reputation</h3>
+            <p class="roadmap-desc">The scoring engine launches. Behavior is tracked. Stakes are enforced. Reputation becomes the primary currency of agent credibility.</p>
+          </div>
+        </div>
+
+        <div class="roadmap-item fade-in fade-in-delay-3">
+          <div><p class="roadmap-phase">Phase 4</p></div>
+          <div>
+            <h3 class="roadmap-title">Standard</h3>
+            <p class="roadmap-desc">Cross-protocol adoption. The ORBS reputation layer becomes the default trust primitive across the entire agent economy.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section id="cta" class="cta-section">
+    <div class="cta-inner">
+      <p class="cta-label fade-in"><span class="dot-accent"></span>Join The Protocol</p>
+      <h2 class="cta-title fade-in fade-in-delay-1">
+        The agent economy<br/>needs <span class="pink-italic">accountability.</span>
+      </h2>
+      <div class="cta-buttons fade-in fade-in-delay-2">
+        <a href="#" class="btn-pink" style="padding:14px 48px; font-size:12px;">BUY ORBS</a>
+        <a href="#" class="btn-outline" style="padding:14px 48px; font-size:12px;">FOLLOW THE BUILD</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-inner">
+      <p class="footer-copy">&copy; 2026 Orbs Agent. All rights reserved.</p>
+      <ul class="footer-links">
+        <li><a href="#">Twitter</a></li>
+        <li><a href="#">Github</a></li>
+      </ul>
+    </div>
+  </footer>
+
+  <!-- ═══════════════════════════════════════════════
+       WHITEPAPER / DOCS MODAL
+  ════════════════════════════════════════════════ -->
+  <div class="wp-overlay" id="wpOverlay">
+
+    <!-- Sticky nav bar -->
+    <div class="wp-nav">
+      <div class="wp-nav-left">
+        <span class="wp-nav-label">Whitepaper &nbsp;·&nbsp; v1.0</span>
+        <div class="wp-nav-sep"></div>
+        <nav class="wp-toc">
+          <a href="#wp-abstract">Abstract</a>
+          <a href="#wp-problem">Problem</a>
+          <a href="#wp-solution">Solution</a>
+          <a href="#wp-arch">Architecture</a>
+          <a href="#wp-token">Tokenomics</a>
+          <a href="#wp-gov">Governance</a>
+        </nav>
+      </div>
+      <button class="wp-close" id="wpClose">&#x2715;</button>
+    </div>
+
+    <div class="wp-body" id="wpBody">
+      <div class="wp-paper">
+
+        <!-- ── MASTHEAD ── -->
+        <div class="wp-masthead">
+          <hr class="wp-rule-double" />
+          <div class="wp-edition-line">
+            <span>VOL. I &nbsp;·&nbsp; ISSUE NO. 1</span>
+            <span>EST. 2026 &nbsp;·&nbsp; THE REPUTATION PROTOCOL</span>
+            <span>ORBSAGENT.XYZ</span>
+          </div>
+          <h1 class="wp-title">THE ORBS<br/>AGENT</h1>
+          <p class="wp-subtitle">A Reputation & Identity Protocol for Autonomous AI Agents</p>
+          <hr class="wp-rule-single" style="margin:16px 0 12px;" />
+          <div class="wp-meta-row">
+            <span>WHITEPAPER</span>
+            <span>·</span>
+            <span class="pink">APRIL 2026</span>
+            <span>·</span>
+            <span>VERSION 1.0</span>
+            <span>·</span>
+            <span>CONFIDENTIAL DRAFT</span>
+          </div>
+          <hr class="wp-rule-single" style="margin:12px 0 0;" />
+        </div>
+
+        <!-- ── LEDE / ABSTRACT ── -->
+        <div class="wp-lede-row" id="wp-abstract">
+          <div>
+            <p class="wp-kicker">Abstract</p>
+            <h2 class="wp-lede-headline">Trust is the missing primitive of the agent economy.</h2>
+          </div>
+          <div class="wp-lede-sep"></div>
+          <div class="wp-lede-body">
+            <p class="wp-dropcap">AI agents are no longer theoretical. They trade capital, execute transactions, manage portfolios, and act autonomously on behalf of millions of users — today, at scale, without pause. Yet the infrastructure layer beneath them is alarmingly primitive: agents operate without identity, without history, without consequence.</p>
+            <p>Orbs Agent proposes a foundational solution: a permissionless, on-chain identity and reputation system for AI agents. Any agent can register a permanent identity. Every action is recorded immutably. Reputation accrues or degrades based on verifiable behavior. Agents stake ORBS tokens as economic collateral. Trust becomes queryable, programmable, and composable.</p>
+            <p>This paper describes the problem in full, the architecture of the Orbs Agent protocol, the ORBS token model, and the governance structure that will govern the protocol's evolution.</p>
+          </div>
+        </div>
+
+        <!-- ── STATS ── -->
+        <div class="wp-stats-row">
+          <div class="wp-stat-cell">
+            <p class="wp-stat-cell-num">0</p>
+            <p class="wp-stat-cell-label">Identity Standards</p>
+          </div>
+          <div class="wp-stat-cell">
+            <p class="wp-stat-cell-num">$0</p>
+            <p class="wp-stat-cell-label">Agent Accountability</p>
+          </div>
+          <div class="wp-stat-cell">
+            <p class="wp-stat-cell-num">∞</p>
+            <p class="wp-stat-cell-label">Agents Operating Daily</p>
+          </div>
+          <div class="wp-stat-cell">
+            <p class="wp-stat-cell-num" style="font-size:28px; color:#eaeaea;">2026</p>
+            <p class="wp-stat-cell-label">Year of the Fix</p>
+          </div>
+        </div>
+
+        <!-- ── SECTION I: THE PROBLEM ── -->
+        <div class="wp-section" id="wp-problem">
+          <div class="wp-section-head">
+            <p class="wp-section-num">Section I</p>
+            <h2 class="wp-section-title">The Anonymous Agent Economy</h2>
+          </div>
+          <div class="wp-columns-2 wp-body-text">
+            <p class="wp-dropcap">The proliferation of autonomous AI agents has outpaced every layer of infrastructure designed to support them. In the span of eighteen months, the number of agents executing financial transactions on public blockchains grew by an estimated three orders of magnitude. They operate DeFi strategies, execute cross-chain arbitrage, manage NFT portfolios, and run automated governance votes — all without a single verifiable identity on record.</p>
+            <p>This is not a technical failure. It is a design omission. The protocols upon which these agents operate were built for human actors, not autonomous systems with variable behavior profiles, unknown provenance, and disposable deployment patterns.</p>
+            <div class="wp-pullquote">
+              <p>"An agent fails — it disappears. No history. No reputation. No <span class="pink-italic">consequence.</span>"</p>
+            </div>
+            <p>The consequences of this omission are compounding. When an agent behaves maliciously — or simply fails — there is no mechanism for attribution. The deployer cannot be identified. The behavioral record does not exist. The capital lost is gone without recourse. Users are left holding the outcome of decisions made by systems they cannot inspect, verify, or hold accountable.</p>
+            <p>More insidiously, the lack of identity infrastructure creates a race to disposability. Bad actors deliberately architect agents to be ephemeral — deployed for a single operation, then abandoned. Without persistent identity, reputation cannot accumulate. Without reputation, there is no incentive to behave well over time. The market selects for short-termism by default.</p>
+            <div class="wp-callout">
+              <p><strong>The three structural failures of today's agent economy:</strong> (1) Anonymous deployment with no owner attribution. (2) No persistent behavioral record across agent lifetimes. (3) Zero economic consequence for failure or malicious action.</p>
+            </div>
+            <p>Existing solutions — KYC layers, allowlists, and off-chain reputation systems — are insufficient. They are centralized, permissioned, and incompatible with the composability requirements of a multi-chain agent economy. What is required is a neutral, permissionless, on-chain primitive: a reputation layer that any protocol can read without trusting any intermediary.</p>
+          </div>
+        </div>
+
+        <!-- ── SECTION II: THE SOLUTION ── -->
+        <div class="wp-section" id="wp-solution">
+          <div class="wp-section-head">
+            <p class="wp-section-num">Section II</p>
+            <h2 class="wp-section-title">The Orbs Agent Protocol</h2>
+          </div>
+
+          <!-- 3 col intro -->
+          <div class="wp-columns-3 wp-body-text">
+            <p>Orbs Agent is a permissionless, chain-agnostic protocol that provides four primitives for the agent economy: <strong>Identity</strong>, <strong>Behavior Recording</strong>, <strong>Stake-Backed Commitment</strong>, and <strong>Trust Queries</strong>. Together, these primitives make reputation programmable.</p>
+            <p>The protocol is non-custodial. Orbs Agent does not hold funds, control agents, or make trust decisions. It provides the infrastructure upon which trust decisions can be made by any consuming application, with any threshold, for any purpose.</p>
+            <p>The design is deliberately minimal. We resist the temptation to build a governance layer for agent behavior. The protocol records and exposes — it does not prescribe. The market determines what reputation score is sufficient for a given use case.</p>
+          </div>
+
+          <div class="wp-pullquote" style="margin:32px 0;">
+            <p>"Not a dashboard. Not a whitepaper.<br/><span class="pink-italic">Infrastructure.</span>"</p>
+          </div>
+
+          <div class="wp-columns-2 wp-body-text">
+            <p><strong>Identity Registration.</strong> Any agent — regardless of framework, chain, or owner — can register a permanent on-chain identity via the Orbs Agent registry contract. The identity is non-transferable and immutable once created. Registration requires a minimum ORBS stake, ensuring economic commitment from day one. The registry stores a minimal identity record: owner address, chain, creation timestamp, and optional metadata.</p>
+            <p><strong>Behavior Recording.</strong> The protocol exposes a recording interface for dApps, protocols, and agent orchestrators to submit behavioral events against a registered agent ID. Events are typed (trade execution, governance vote, position management, etc.), timestamped, and linked to on-chain transactions wherever possible. The behavioral ledger is append-only and cannot be modified or deleted.</p>
+            <p><strong>Stake-Backed Commitment.</strong> Registered agents stake ORBS tokens as economic collateral backing their identity. Stake is locked for a configurable period and subject to slashing by governance vote in cases of provable malicious behavior. Higher stake — particularly with longer lock periods — yields a higher reputation multiplier, creating a strong incentive to commit meaningfully.</p>
+            <p><strong>Trust Query Interface.</strong> The protocol exposes a unified API and on-chain read function that returns a trust signal for any agent ID. Callers can specify their own thresholds: minimum score, minimum stake, minimum tier, or any combination. The result is binary (trusted/not trusted) plus the underlying score data for applications that want full context.</p>
+          </div>
+        </div>
+
+        <!-- ── SECTION III: ARCHITECTURE ── -->
+        <div class="wp-section" id="wp-arch">
+          <div class="wp-section-head">
+            <p class="wp-section-num">Section III</p>
+            <h2 class="wp-section-title">Technical Architecture</h2>
+          </div>
+
+          <div class="wp-body-text" style="margin-bottom:24px;">
+            <p>The Orbs Agent protocol is composed of four on-chain contracts and one off-chain indexing layer. All contracts are upgradeable via governance with a 48-hour timelock. The indexer is operated by the Orbs Agent Foundation initially, with plans to decentralize operation in Phase 4.</p>
+          </div>
+
+          <div class="wp-arch-block">
+            <span class="arch-title">ORBS AGENT PROTOCOL — SYSTEM ARCHITECTURE</span><br/>
+            <br/>
+            ┌─────────────────────────────────────────────────────────────────┐<br/>
+            │ &nbsp;&nbsp;<span class="arch-pink">CONSUMER LAYER</span> &nbsp;&nbsp;Wallets · DeFi Protocols · Agent Orchestrators  │<br/>
+            └───────────────────────┬─────────────────────────────────────────┘<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│ Trust Query API &nbsp;/&nbsp; On-Chain Read<br/>
+            ┌──────────────────────▼──────────────────────────────────────────┐<br/>
+            │ &nbsp;&nbsp;<span class="arch-blue">TRUST RESOLVER</span> &nbsp;&nbsp;Score aggregation · Threshold evaluation &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br/>
+            └──────┬────────────────────────┬───────────────────────────┬─────┘<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br/>
+            ┌─────▼──────┐ &nbsp;&nbsp;&nbsp;┌────────────▼──────────┐ &nbsp;┌──────────▼──────────┐<br/>
+            │ <span class="arch-green">REGISTRY</span> &nbsp;&nbsp;│ &nbsp;&nbsp;&nbsp;│ <span class="arch-green">REPUTATION ENGINE</span> &nbsp;&nbsp;&nbsp;│ &nbsp;│ <span class="arch-green">STAKING CONTRACT</span> &nbsp;&nbsp;&nbsp;│<br/>
+            │ Identity &nbsp;&nbsp;│ &nbsp;&nbsp;&nbsp;│ Score · Tier · History│ &nbsp;│ Lock · Slash · Bond │<br/>
+            └────────────┘ &nbsp;&nbsp;&nbsp;└───────────────────────┘ &nbsp;└─────────────────────┘<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│ Event Feed<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;┌──────────▼────────────────┐<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│ &nbsp;&nbsp;<span class="arch-pink">CHAIN INDEXER</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│ ETH · SOL · Base · ARB &nbsp;&nbsp;&nbsp;│<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└───────────────────────────┘
+          </div>
+
+          <div class="wp-columns-2 wp-body-text">
+            <p><strong>Registry Contract.</strong> Deployed on Ethereum mainnet with cross-chain message bridges for Solana, Base, and Arbitrum. Stores the canonical identity record for each registered agent. Owner-only mutation with signature verification. Registration events are emitted and indexed by the chain indexer.</p>
+            <p><strong>Reputation Engine.</strong> A stateful contract that maintains scoring state for each registered agent. Score updates are batched and submitted by authorized reporters (initially the Orbs Agent Foundation, later a decentralized set of node operators). The scoring formula is publicly documented and immutable without governance approval.</p>
+            <p><strong>Staking Contract.</strong> Manages ORBS token deposits, lock schedules, and slashing logic. Slashing events require a two-of-three multisig approval from the Slashing Committee — a governance-elected body with rotating membership. Slashed tokens are sent to a community treasury, not burned.</p>
+            <p><strong>Trust Resolver.</strong> A lightweight aggregation contract that combines registry, reputation, and staking data into a single trust signal. Optimized for gas efficiency with packed storage reads. Off-chain caching layer at API nodes reduces on-chain load for high-frequency query patterns.</p>
+          </div>
+        </div>
+
+        <!-- ── SECTION IV: TOKENOMICS ── -->
+        <div class="wp-section" id="wp-token">
+          <div class="wp-section-head">
+            <p class="wp-section-num">Section IV</p>
+            <h2 class="wp-section-title">The ORBS Token</h2>
+          </div>
+          <div class="wp-columns-2 wp-body-text">
+            <p class="wp-dropcap">ORBS is the native utility and governance token of the Orbs Agent protocol. It serves three functions simultaneously: it is the staking asset that backs agent identities, the governance token that controls protocol evolution, and the fee currency for advanced API access.</p>
+            <p>The total supply of ORBS is fixed at one billion tokens (1,000,000,000 ORBS). There is no inflation schedule. All tokens are minted at genesis and distributed according to the allocation below. The fixed supply ensures that staking dynamics create genuine scarcity as protocol adoption grows.</p>
+            <div class="wp-callout">
+              <p><strong>ORBS is not a speculative instrument.</strong> Its value is derived from protocol utility: agents must hold and lock ORBS to maintain their identity and reputation standing. As the agent economy grows, demand for ORBS is structurally linked to the number of active, staked agents.</p>
+            </div>
+            <p>The fee model is minimal. Basic trust queries are free. High-volume API access, advanced scoring parameters, and real-time webhooks require a fee denominated in ORBS, paid to a protocol treasury governed by ORBS holders.</p>
+          </div>
+
+          <table class="wp-table">
+            <thead>
+              <tr>
+                <th>Allocation</th>
+                <th>% of Supply</th>
+                <th>Tokens</th>
+                <th>Vesting</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Community & Ecosystem</td>
+                <td><span class="pct">40.0%</span></td>
+                <td>400,000,000</td>
+                <td>4 years, linear</td>
+                <td>Grants, incentives, developer adoption programs</td>
+              </tr>
+              <tr>
+                <td>Protocol Treasury</td>
+                <td><span class="pct">20.0%</span></td>
+                <td>200,000,000</td>
+                <td>Governance-controlled</td>
+                <td>Long-term protocol development and security reserves</td>
+              </tr>
+              <tr>
+                <td>Team & Advisors</td>
+                <td><span class="pct">18.0%</span></td>
+                <td>180,000,000</td>
+                <td>1yr cliff, 3yr vest</td>
+                <td>Core contributors and strategic advisors</td>
+              </tr>
+              <tr>
+                <td>Early Backers</td>
+                <td><span class="pct">12.0%</span></td>
+                <td>120,000,000</td>
+                <td>6mo cliff, 2yr vest</td>
+                <td>Seed and strategic round investors</td>
+              </tr>
+              <tr>
+                <td>Public Launch</td>
+                <td><span class="pct">7.0%</span></td>
+                <td>70,000,000</td>
+                <td>No lock</td>
+                <td>Initial DEX listing and price discovery</td>
+              </tr>
+              <tr>
+                <td>Liquidity Provision</td>
+                <td><span class="pct">3.0%</span></td>
+                <td>30,000,000</td>
+                <td>6 months</td>
+                <td>Protocol-owned liquidity on launch DEXs</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- ── SECTION V: GOVERNANCE ── -->
+        <div class="wp-section" id="wp-gov">
+          <div class="wp-section-head">
+            <p class="wp-section-num">Section V</p>
+            <h2 class="wp-section-title">Governance & The Path Forward</h2>
+          </div>
+          <div class="wp-columns-3 wp-body-text">
+            <p>The Orbs Agent protocol will be governed by ORBS token holders from day one of the governance module launch (Phase 3). Governance controls: protocol parameter changes, scoring formula updates, slashing committee elections, treasury allocations, and protocol upgrades.</p>
+            <p>Proposals require a minimum of 1,000,000 ORBS in delegation to advance to a vote. Voting lasts seven days. A quorum of 10% of circulating supply and a majority of 60% is required for passage. All passed proposals are subject to a 48-hour execution timelock during which the community can respond to unexpected behavior.</p>
+            <p>The Orbs Agent Foundation — a Swiss-incorporated nonprofit — will steward the protocol during the launch and early growth phases. The Foundation's role is explicitly transitional. As on-chain governance matures and ORBS distribution broadens, Foundation powers will sunset and transfer to the DAO. The target date for full decentralization is Q2 2027.</p>
+          </div>
+
+          <div class="wp-pullquote">
+            <p>"The protocol records and exposes.<br/>It does not prescribe.<br/>The market determines what <span class="pink-italic">trust</span> is worth."</p>
+          </div>
+
+          <div class="wp-columns-2 wp-body-text">
+            <p><strong>Phase 1 — Launch.</strong> ORBS token live on Ethereum mainnet. DEX liquidity provisioned. Community formed. Governance forum opened. The Foundation publishes quarterly transparency reports covering protocol metrics, treasury usage, and development progress.</p>
+            <p><strong>Phase 2 — Registry.</strong> Agent identity contracts deployed. First agents register. Developer SDK released. Indexer launched. First trust query API goes live. Integration partnerships announced with at least three major DeFi protocols.</p>
+            <p><strong>Phase 3 — Reputation.</strong> Scoring engine live. Behavioral recording begins. Staking contract activated. Slashing committee elected by governance. First slashing event demonstrates the enforcement mechanism is real and functional.</p>
+            <p><strong>Phase 4 — Standard.</strong> Cross-protocol adoption campaign. On-chain governance module transferred from Foundation to DAO. Chain indexer nodes decentralized. ORBS reputation layer submitted to EIP process as a standard for agent identity across EVM chains.</p>
+          </div>
+        </div>
+
+        <!-- ── FOOTER ── -->
+        <div class="wp-footer-rule">
+          <span>Orbs Agent Whitepaper &nbsp;·&nbsp; Version 1.0</span>
+          <span style="color:var(--pink);">ORBSAGENT.XYZ</span>
+          <span>March 2026 &nbsp;·&nbsp; Not Financial Advice</span>
+        </div>
+
+      </div><!-- /.wp-paper -->
+    </div><!-- /.wp-body -->
+  </div><!-- /.wp-overlay -->
+
+  <!-- ═══════════════════════════════════════════════
+       API REFERENCE MODAL
+  ════════════════════════════════════════════════ -->
+  <div class="api-overlay" id="apiOverlay">
+
+    <!-- Top bar -->
+    <div class="api-topbar">
+      <div class="api-topbar-left">
+        <span class="logo" style="font-size:13px;">ORB<span>.</span>S &nbsp;AGENT</span>
+        <span class="api-badge">API Reference</span>
+        <span class="api-version">v1.0 &nbsp;·&nbsp; REST &nbsp;·&nbsp; JSON</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:24px;">
+        <span style="font-size:11px; color:#555; letter-spacing:0.05em;">Base URL: <code style="color:#6482ff; font-family:'Courier New',monospace;">https://api.orbsagent.xyz/v1</code></span>
+        <button class="api-close" id="apiClose">&#x2715;</button>
+      </div>
+    </div>
+
+    <div class="api-body">
+
+      <!-- Sidebar -->
+      <div class="api-sidebar">
+
+        <div class="api-sidebar-section">
+          <p class="api-sidebar-label">Agents</p>
+          <button class="api-endpoint-btn active" data-panel="ep-agent-get">
+            <span class="method-badge method-get">GET</span>
+            <span class="api-ep-path">/agents/{id}</span>
+          </button>
+          <button class="api-endpoint-btn" data-panel="ep-agent-list">
+            <span class="method-badge method-get">GET</span>
+            <span class="api-ep-path">/agents</span>
+          </button>
+          <button class="api-endpoint-btn" data-panel="ep-agent-register">
+            <span class="method-badge method-post">POST</span>
+            <span class="api-ep-path">/agents/register</span>
+          </button>
+          <button class="api-endpoint-btn" data-panel="ep-agent-update">
+            <span class="method-badge method-patch">PATCH</span>
+            <span class="api-ep-path">/agents/{id}</span>
+          </button>
+          <button class="api-endpoint-btn" data-panel="ep-agent-revoke">
+            <span class="method-badge method-delete">DELETE</span>
+            <span class="api-ep-path">/agents/{id}</span>
+          </button>
+        </div>
+
+        <div class="api-sidebar-section">
+          <p class="api-sidebar-label">Reputation</p>
+          <button class="api-endpoint-btn" data-panel="ep-rep-score">
+            <span class="method-badge method-get">GET</span>
+            <span class="api-ep-path">/agents/{id}/reputation</span>
+          </button>
+          <button class="api-endpoint-btn" data-panel="ep-rep-history">
+            <span class="method-badge method-get">GET</span>
+            <span class="api-ep-path">/agents/{id}/history</span>
+          </button>
+        </div>
+
+        <div class="api-sidebar-section">
+          <p class="api-sidebar-label">Staking</p>
+          <button class="api-endpoint-btn" data-panel="ep-stake-post">
+            <span class="method-badge method-post">POST</span>
+            <span class="api-ep-path">/agents/{id}/stake</span>
+          </button>
+          <button class="api-endpoint-btn" data-panel="ep-stake-get">
+            <span class="method-badge method-get">GET</span>
+            <span class="api-ep-path">/agents/{id}/stake</span>
+          </button>
+        </div>
+
+        <div class="api-sidebar-section">
+          <p class="api-sidebar-label">Trust</p>
+          <button class="api-endpoint-btn" data-panel="ep-trust-query">
+            <span class="method-badge method-get">GET</span>
+            <span class="api-ep-path">/trust/query</span>
+          </button>
+          <button class="api-endpoint-btn" data-panel="ep-trust-verify">
+            <span class="method-badge method-post">POST</span>
+            <span class="api-ep-path">/trust/verify</span>
+          </button>
+        </div>
+
+        <div class="api-sidebar-section">
+          <p class="api-sidebar-label">System</p>
+          <button class="api-endpoint-btn" data-panel="ep-health">
+            <span class="method-badge method-get">GET</span>
+            <span class="api-ep-path">/health</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Main content -->
+      <div class="api-main">
+
+        <!-- ── GET /agents/{id} ── -->
+        <div class="api-panel active" id="ep-agent-get">
+          <div class="api-endpoint-header">
+            <span class="method-badge method-get" style="font-size:11px; padding:4px 10px;">GET</span>
+            <h2 class="api-endpoint-title">Get Agent</h2>
+          </div>
+          <p class="api-endpoint-desc">Retrieve the on-chain identity record for a registered agent. Returns full identity metadata including creation timestamp, status, owner address, and current stake balance.</p>
+
+          <div class="api-url-bar">
+            <span class="api-url-method" style="color:#00c864;">GET</span>
+            <span class="api-url-text"><span class="base">https://api.orbsagent.xyz/v1</span>/agents/<span class="param">{agent_id}</span></span>
+          </div>
+
+          <div class="api-two-col">
+            <div class="api-info-card">
+              <p class="api-info-card-label">Authentication</p>
+              <p class="api-info-card-value">Bearer token via <code>Authorization</code> header. API keys available in dashboard.</p>
+            </div>
+            <div class="api-info-card">
+              <p class="api-info-card-label">Rate Limit</p>
+              <p class="api-info-card-value">300 requests / minute per API key. Burst up to 600 for verified integrations.</p>
+            </div>
+          </div>
+
+          <p class="api-section-title">Path Parameters</p>
+          <table class="api-table">
+            <thead>
+              <tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>agent_id<span class="required">required</span></td>
+                <td>string</td>
+                <td>The unique on-chain agent identifier. Format: <code style="font-family:'Courier New',monospace; color:#6482ff; font-size:11px;">orbs_ag_[26 chars]</code></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p class="api-section-title">Query Parameters</p>
+          <table class="api-table">
+            <thead>
+              <tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>include<span class="optional">optional</span></td>
+                <td>string[]</td>
+                <td>Comma-separated list of related resources to include. Options: <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">reputation</code>, <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">stake</code>, <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">history</code></td>
+              </tr>
+              <tr>
+                <td>chain<span class="optional">optional</span></td>
+                <td>string</td>
+                <td>Filter by chain. Options: <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">ethereum</code>, <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">solana</code>, <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">base</code>, <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">arbitrum</code></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p class="api-section-title">Request Example</p>
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-block-lang">cURL</span>
+              <button class="code-copy-btn">Copy</button>
+            </div>
+            <pre><span class="method-c">curl</span> <span class="url-c">https://api.orbsagent.xyz/v1/agents/orbs_ag_7x9mKpLqNvR3wYs</span> \
+  <span class="header-c">-H</span> <span class="val-c">"Authorization: Bearer ok_live_••••••••••••"</span> \
+  <span class="header-c">-H</span> <span class="val-c">"Accept: application/json"</span> \
+  <span class="header-c">-G</span> \
+  <span class="header-c">--data-urlencode</span> <span class="val-c">"include=reputation,stake"</span></pre>
+          </div>
+
+          <p class="api-section-title">Response</p>
+          <div class="api-response-tabs">
+            <button class="api-resp-tab active" data-resp="resp-200-agent-get">200 OK</button>
+            <button class="api-resp-tab" data-resp="resp-404-agent-get">404 Not Found</button>
+            <button class="api-resp-tab" data-resp="resp-401-agent-get">401 Unauthorized</button>
+          </div>
+          <div class="code-block" style="border-top:none; margin-top:0;">
+            <div class="resp-panel active" id="resp-200-agent-get">
+              <pre>{
+  <span class="key">"id"</span>: <span class="str">"orbs_ag_7x9mKpLqNvR3wYs"</span>,
+  <span class="key">"object"</span>: <span class="str">"agent"</span>,
+  <span class="key">"status"</span>: <span class="str">"active"</span>,
+  <span class="key">"display_name"</span>: <span class="str">"ArbitrageBot Alpha"</span>,
+  <span class="key">"owner_address"</span>: <span class="str">"0x3fC8E...d4A91"</span>,
+  <span class="key">"chain"</span>: <span class="str">"ethereum"</span>,
+  <span class="key">"created_at"</span>: <span class="num">1751234567</span>,
+  <span class="key">"updated_at"</span>: <span class="num">1751298340</span>,
+  <span class="key">"metadata"</span>: {
+    <span class="key">"version"</span>: <span class="str">"2.4.1"</span>,
+    <span class="key">"framework"</span>: <span class="str">"eliza"</span>,
+    <span class="key">"capabilities"</span>: [<span class="str">"trading"</span>, <span class="str">"portfolio"</span>, <span class="str">"rebalance"</span>],
+    <span class="key">"endpoint"</span>: <span class="str">"https://agent.example.com/v2"</span>
+  },
+  <span class="key">"reputation"</span>: {
+    <span class="key">"score"</span>: <span class="num">847</span>,
+    <span class="key">"tier"</span>: <span class="str">"verified"</span>,
+    <span class="key">"total_actions"</span>: <span class="num">12847</span>,
+    <span class="key">"success_rate"</span>: <span class="num">0.9923</span>,
+    <span class="key">"last_scored_at"</span>: <span class="num">1751290000</span>
+  },
+  <span class="key">"stake"</span>: {
+    <span class="key">"amount_orbs"</span>: <span class="str">"50000.00"</span>,
+    <span class="key">"usd_value"</span>: <span class="str">"12400.00"</span>,
+    <span class="key">"locked_until"</span>: <span class="num">1767120000</span>,
+    <span class="key">"slashable"</span>: <span class="bool">true</span>
+  }
+}</pre>
+            </div>
+            <div class="resp-panel" id="resp-404-agent-get">
+              <pre>{
+  <span class="key">"error"</span>: {
+    <span class="key">"code"</span>: <span class="str">"agent_not_found"</span>,
+    <span class="key">"message"</span>: <span class="str">"No agent exists with the provided ID."</span>,
+    <span class="key">"status"</span>: <span class="num">404</span>,
+    <span class="key">"request_id"</span>: <span class="str">"req_01HXK9B2M7RZPQ3T"</span>
+  }
+}</pre>
+            </div>
+            <div class="resp-panel" id="resp-401-agent-get">
+              <pre>{
+  <span class="key">"error"</span>: {
+    <span class="key">"code"</span>: <span class="str">"unauthorized"</span>,
+    <span class="key">"message"</span>: <span class="str">"Invalid or missing API key."</span>,
+    <span class="key">"status"</span>: <span class="num">401</span>,
+    <span class="key">"docs_url"</span>: <span class="str">"https://docs.orbsagent.xyz/authentication"</span>
+  }
+}</pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── GET /agents ── -->
+        <div class="api-panel" id="ep-agent-list">
+          <div class="api-endpoint-header">
+            <span class="method-badge method-get" style="font-size:11px; padding:4px 10px;">GET</span>
+            <h2 class="api-endpoint-title">List Agents</h2>
+          </div>
+          <p class="api-endpoint-desc">Returns a paginated list of all registered agents. Supports filtering by chain, status, reputation tier, and stake range. Results are sorted by reputation score descending by default.</p>
+          <div class="api-url-bar">
+            <span class="api-url-method" style="color:#00c864;">GET</span>
+            <span class="api-url-text"><span class="base">https://api.orbsagent.xyz/v1</span>/agents</span>
+          </div>
+          <p class="api-section-title">Query Parameters</p>
+          <table class="api-table">
+            <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td>limit<span class="optional">optional</span></td><td>integer</td><td>Number of results per page. Default: <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">20</code>. Max: <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">100</code></td></tr>
+              <tr><td>cursor<span class="optional">optional</span></td><td>string</td><td>Pagination cursor from previous response <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">next_cursor</code> field</td></tr>
+              <tr><td>chain<span class="optional">optional</span></td><td>string</td><td>Filter by chain: <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">ethereum</code>, <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">solana</code>, <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">base</code>, <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">arbitrum</code></td></tr>
+              <tr><td>status<span class="optional">optional</span></td><td>string</td><td>Filter by status: <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">active</code>, <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">suspended</code>, <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">revoked</code></td></tr>
+              <tr><td>tier<span class="optional">optional</span></td><td>string</td><td>Reputation tier: <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">unverified</code>, <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">emerging</code>, <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">verified</code>, <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">elite</code></td></tr>
+              <tr><td>sort<span class="optional">optional</span></td><td>string</td><td>Sort field. Options: <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">reputation</code>, <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">stake</code>, <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">created_at</code>. Prefix with <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">-</code> for descending.</td></tr>
+            </tbody>
+          </table>
+          <p class="api-section-title">Response &nbsp;·&nbsp; 200 OK</p>
+          <div class="code-block">
+            <div class="code-block-header"><span class="code-block-lang">JSON</span><button class="code-copy-btn">Copy</button></div>
+            <pre>{
+  <span class="key">"object"</span>: <span class="str">"list"</span>,
+  <span class="key">"count"</span>: <span class="num">2</span>,
+  <span class="key">"total"</span>: <span class="num">4821</span>,
+  <span class="key">"next_cursor"</span>: <span class="str">"cur_01HXK9B2M7RZPQ3T"</span>,
+  <span class="key">"has_more"</span>: <span class="bool">true</span>,
+  <span class="key">"data"</span>: [
+    {
+      <span class="key">"id"</span>: <span class="str">"orbs_ag_7x9mKpLqNvR3wYs"</span>,
+      <span class="key">"display_name"</span>: <span class="str">"ArbitrageBot Alpha"</span>,
+      <span class="key">"status"</span>: <span class="str">"active"</span>,
+      <span class="key">"chain"</span>: <span class="str">"ethereum"</span>,
+      <span class="key">"reputation_score"</span>: <span class="num">847</span>,
+      <span class="key">"tier"</span>: <span class="str">"verified"</span>,
+      <span class="key">"stake_orbs"</span>: <span class="str">"50000.00"</span>
+    },
+    {
+      <span class="key">"id"</span>: <span class="str">"orbs_ag_2nBzQmVhJeD8cKw"</span>,
+      <span class="key">"display_name"</span>: <span class="str">"YieldOptimizer v3"</span>,
+      <span class="key">"status"</span>: <span class="str">"active"</span>,
+      <span class="key">"chain"</span>: <span class="str">"base"</span>,
+      <span class="key">"reputation_score"</span>: <span class="num">791</span>,
+      <span class="key">"tier"</span>: <span class="str">"verified"</span>,
+      <span class="key">"stake_orbs"</span>: <span class="str">"25000.00"</span>
+    }
+  ]
+}</pre>
+          </div>
+        </div>
+
+        <!-- ── POST /agents/register ── -->
+        <div class="api-panel" id="ep-agent-register">
+          <div class="api-endpoint-header">
+            <span class="method-badge method-post" style="font-size:11px; padding:4px 10px;">POST</span>
+            <h2 class="api-endpoint-title">Register Agent</h2>
+          </div>
+          <p class="api-endpoint-desc">Register a new AI agent on the ORBS protocol. Creates a permanent, immutable on-chain identity. The registering wallet becomes the owner and is responsible for initial stake. Returns the agent object with a unique identifier.</p>
+          <div class="api-url-bar">
+            <span class="api-url-method" style="color:#6482ff;">POST</span>
+            <span class="api-url-text"><span class="base">https://api.orbsagent.xyz/v1</span>/agents/register</span>
+          </div>
+          <p class="api-section-title">Request Body</p>
+          <table class="api-table">
+            <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td>display_name<span class="required">required</span></td><td>string</td><td>Human-readable name for the agent. 3–64 characters. Must be unique per owner address.</td></tr>
+              <tr><td>chain<span class="required">required</span></td><td>string</td><td>Target chain: <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">ethereum</code>, <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">solana</code>, <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">base</code>, <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">arbitrum</code></td></tr>
+              <tr><td>owner_address<span class="required">required</span></td><td>string</td><td>Wallet address that will own and control this agent identity.</td></tr>
+              <tr><td>initial_stake<span class="required">required</span></td><td>string</td><td>Initial ORBS stake amount as decimal string. Minimum: <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">"1000.00"</code></td></tr>
+              <tr><td>metadata<span class="optional">optional</span></td><td>object</td><td>Arbitrary metadata object. Supports <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">version</code>, <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">framework</code>, <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">capabilities</code>, <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">endpoint</code></td></tr>
+              <tr><td>signature<span class="required">required</span></td><td>string</td><td>EIP-712 signature from the owner address proving key ownership.</td></tr>
+            </tbody>
+          </table>
+          <p class="api-section-title">Request Example</p>
+          <div class="code-block">
+            <div class="code-block-header"><span class="code-block-lang">cURL</span><button class="code-copy-btn">Copy</button></div>
+            <pre><span class="method-c">curl</span> <span class="url-c">https://api.orbsagent.xyz/v1/agents/register</span> \
+  <span class="header-c">-X</span> POST \
+  <span class="header-c">-H</span> <span class="val-c">"Authorization: Bearer ok_live_••••••••••••"</span> \
+  <span class="header-c">-H</span> <span class="val-c">"Content-Type: application/json"</span> \
+  <span class="header-c">-d</span> <span class="val-c">'{
+    "display_name": "MyTradingAgent v1",
+    "chain": "ethereum",
+    "owner_address": "0x3fC8E7A2d9B1Fc3e8dA4b0C2e7F9D3a6b5c4E1d",
+    "initial_stake": "5000.00",
+    "metadata": {
+      "version": "1.0.0",
+      "framework": "langchain",
+      "capabilities": ["trading", "analysis"],
+      "endpoint": "https://myagent.io/api"
+    },
+    "signature": "0x4f3a...b9c2"
+  }'</span></pre>
+          </div>
+          <p class="api-section-title">Response &nbsp;·&nbsp; 201 Created</p>
+          <div class="code-block">
+            <div class="code-block-header"><span class="code-block-lang">JSON</span><button class="code-copy-btn">Copy</button></div>
+            <pre>{
+  <span class="key">"id"</span>: <span class="str">"orbs_ag_9pLmNqRzXvW2kTs"</span>,
+  <span class="key">"object"</span>: <span class="str">"agent"</span>,
+  <span class="key">"status"</span>: <span class="str">"active"</span>,
+  <span class="key">"display_name"</span>: <span class="str">"MyTradingAgent v1"</span>,
+  <span class="key">"owner_address"</span>: <span class="str">"0x3fC8E...E1d"</span>,
+  <span class="key">"chain"</span>: <span class="str">"ethereum"</span>,
+  <span class="key">"created_at"</span>: <span class="num">1751301234</span>,
+  <span class="key">"reputation"</span>: {
+    <span class="key">"score"</span>: <span class="num">0</span>,
+    <span class="key">"tier"</span>: <span class="str">"unverified"</span>,
+    <span class="key">"total_actions"</span>: <span class="num">0</span>
+  },
+  <span class="key">"stake"</span>: {
+    <span class="key">"amount_orbs"</span>: <span class="str">"5000.00"</span>,
+    <span class="key">"tx_hash"</span>: <span class="str">"0xd3a9...f7c1"</span>,
+    <span class="key">"slashable"</span>: <span class="bool">true</span>
+  },
+  <span class="key">"tx_hash"</span>: <span class="str">"0xb8f4c2a1...9e3d"</span>
+}</pre>
+          </div>
+        </div>
+
+        <!-- ── PATCH /agents/{id} ── -->
+        <div class="api-panel" id="ep-agent-update">
+          <div class="api-endpoint-header">
+            <span class="method-badge method-patch" style="font-size:11px; padding:4px 10px;">PATCH</span>
+            <h2 class="api-endpoint-title">Update Agent</h2>
+          </div>
+          <p class="api-endpoint-desc">Update mutable fields on an existing agent record. Only the owner address can perform updates. All updates are signed on-chain. The agent ID, owner address, and chain are immutable after registration.</p>
+          <div class="api-url-bar">
+            <span class="api-url-method" style="color:#ffb400;">PATCH</span>
+            <span class="api-url-text"><span class="base">https://api.orbsagent.xyz/v1</span>/agents/<span class="param">{agent_id}</span></span>
+          </div>
+          <p class="api-section-title">Request Body</p>
+          <table class="api-table">
+            <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td>display_name<span class="optional">optional</span></td><td>string</td><td>Updated display name. 3–64 characters.</td></tr>
+              <tr><td>metadata<span class="optional">optional</span></td><td>object</td><td>Updated metadata object. Merged with existing fields (use <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">null</code> values to remove keys).</td></tr>
+              <tr><td>signature<span class="required">required</span></td><td>string</td><td>EIP-712 signature from owner address authorizing this update.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- ── DELETE /agents/{id} ── -->
+        <div class="api-panel" id="ep-agent-revoke">
+          <div class="api-endpoint-header">
+            <span class="method-badge method-delete" style="font-size:11px; padding:4px 10px;">DELETE</span>
+            <h2 class="api-endpoint-title">Revoke Agent</h2>
+          </div>
+          <p class="api-endpoint-desc">Permanently revoke an agent's identity. This action is irreversible. The agent's stake enters a 30-day unbonding period before it can be withdrawn. Reputation history is preserved on-chain for auditability.</p>
+          <div class="api-url-bar">
+            <span class="api-url-method" style="color:#ff5050;">DELETE</span>
+            <span class="api-url-text"><span class="base">https://api.orbsagent.xyz/v1</span>/agents/<span class="param">{agent_id}</span></span>
+          </div>
+          <div style="background:rgba(255,80,80,0.06); border:1px solid rgba(255,80,80,0.15); padding:16px 20px; margin-bottom:32px; font-size:13px; color:#888; line-height:1.6;">
+            <span style="color:#ff5050; font-weight:700; font-size:11px; letter-spacing:0.1em; text-transform:uppercase;">Irreversible Action &nbsp;·&nbsp;</span>
+            Revoking an agent cannot be undone. The on-chain identity will be permanently marked as <code style="font-family:'Courier New',monospace;color:#ff5050;font-size:11px;">revoked</code> and all future trust queries will return a negative result.
+          </div>
+          <p class="api-section-title">Response &nbsp;·&nbsp; 200 OK</p>
+          <div class="code-block">
+            <div class="code-block-header"><span class="code-block-lang">JSON</span><button class="code-copy-btn">Copy</button></div>
+            <pre>{
+  <span class="key">"id"</span>: <span class="str">"orbs_ag_7x9mKpLqNvR3wYs"</span>,
+  <span class="key">"object"</span>: <span class="str">"agent"</span>,
+  <span class="key">"status"</span>: <span class="str">"revoked"</span>,
+  <span class="key">"revoked_at"</span>: <span class="num">1751305500</span>,
+  <span class="key">"unbonding_ends_at"</span>: <span class="num">1753897500</span>,
+  <span class="key">"stake_withdrawable_at"</span>: <span class="num">1753897500</span>,
+  <span class="key">"tx_hash"</span>: <span class="str">"0xa1c3f8...2b7e"</span>
+}</pre>
+          </div>
+        </div>
+
+        <!-- ── GET /agents/{id}/reputation ── -->
+        <div class="api-panel" id="ep-rep-score">
+          <div class="api-endpoint-header">
+            <span class="method-badge method-get" style="font-size:11px; padding:4px 10px;">GET</span>
+            <h2 class="api-endpoint-title">Get Reputation Score</h2>
+          </div>
+          <p class="api-endpoint-desc">Fetch the current reputation score and full scoring breakdown for an agent. Scores range from 0–1000. The scoring model weights recency, action volume, success rate, and stake commitment.</p>
+          <div class="api-url-bar">
+            <span class="api-url-method" style="color:#00c864;">GET</span>
+            <span class="api-url-text"><span class="base">https://api.orbsagent.xyz/v1</span>/agents/<span class="param">{agent_id}</span>/reputation</span>
+          </div>
+          <p class="api-section-title">Response &nbsp;·&nbsp; 200 OK</p>
+          <div class="code-block">
+            <div class="code-block-header"><span class="code-block-lang">JSON</span><button class="code-copy-btn">Copy</button></div>
+            <pre>{
+  <span class="key">"agent_id"</span>: <span class="str">"orbs_ag_7x9mKpLqNvR3wYs"</span>,
+  <span class="key">"score"</span>: <span class="num">847</span>,
+  <span class="key">"tier"</span>: <span class="str">"verified"</span>,
+  <span class="key">"percentile"</span>: <span class="num">94.2</span>,
+  <span class="key">"breakdown"</span>: {
+    <span class="key">"success_rate"</span>: <span class="num">0.9923</span>,
+    <span class="key">"action_volume_score"</span>: <span class="num">312</span>,
+    <span class="key">"recency_score"</span>: <span class="num">198</span>,
+    <span class="key">"stake_weight"</span>: <span class="num">180</span>,
+    <span class="key">"penalty_deductions"</span>: <span class="num">-43</span>
+  },
+  <span class="key">"total_actions"</span>: <span class="num">12847</span>,
+  <span class="key">"successful_actions"</span>: <span class="num">12748</span>,
+  <span class="key">"failed_actions"</span>: <span class="num">99</span>,
+  <span class="key">"slashing_events"</span>: <span class="num">1</span>,
+  <span class="key">"last_active_at"</span>: <span class="num">1751299800</span>,
+  <span class="key">"scored_at"</span>: <span class="num">1751300000</span>,
+  <span class="key">"score_expires_at"</span>: <span class="num">1751386400</span>
+}</pre>
+          </div>
+        </div>
+
+        <!-- ── GET /agents/{id}/history ── -->
+        <div class="api-panel" id="ep-rep-history">
+          <div class="api-endpoint-header">
+            <span class="method-badge method-get" style="font-size:11px; padding:4px 10px;">GET</span>
+            <h2 class="api-endpoint-title">Get Behavior History</h2>
+          </div>
+          <p class="api-endpoint-desc">Returns a paginated log of all recorded actions for an agent. Each event includes the action type, outcome, associated transaction, and the reputation delta applied. Immutable. Cannot be deleted or modified.</p>
+          <div class="api-url-bar">
+            <span class="api-url-method" style="color:#00c864;">GET</span>
+            <span class="api-url-text"><span class="base">https://api.orbsagent.xyz/v1</span>/agents/<span class="param">{agent_id}</span>/history</span>
+          </div>
+          <p class="api-section-title">Response &nbsp;·&nbsp; 200 OK</p>
+          <div class="code-block">
+            <div class="code-block-header"><span class="code-block-lang">JSON</span><button class="code-copy-btn">Copy</button></div>
+            <pre>{
+  <span class="key">"object"</span>: <span class="str">"list"</span>,
+  <span class="key">"agent_id"</span>: <span class="str">"orbs_ag_7x9mKpLqNvR3wYs"</span>,
+  <span class="key">"data"</span>: [
+    {
+      <span class="key">"event_id"</span>: <span class="str">"evt_01HXK9B2FZRMT3PQ"</span>,
+      <span class="key">"type"</span>: <span class="str">"trade_executed"</span>,
+      <span class="key">"outcome"</span>: <span class="str">"success"</span>,
+      <span class="key">"reputation_delta"</span>: <span class="num">+2</span>,
+      <span class="key">"tx_hash"</span>: <span class="str">"0x9f2c...b4a1"</span>,
+      <span class="key">"block"</span>: <span class="num">19847291</span>,
+      <span class="key">"recorded_at"</span>: <span class="num">1751299800</span>
+    },
+    {
+      <span class="key">"event_id"</span>: <span class="str">"evt_01HXK9A1EZRLN2OP"</span>,
+      <span class="key">"type"</span>: <span class="str">"position_failed"</span>,
+      <span class="key">"outcome"</span>: <span class="str">"failure"</span>,
+      <span class="key">"reputation_delta"</span>: <span class="num">-8</span>,
+      <span class="key">"tx_hash"</span>: <span class="str">"0x3d7b...e2f9"</span>,
+      <span class="key">"block"</span>: <span class="num">19847105</span>,
+      <span class="key">"recorded_at"</span>: <span class="num">1751298100</span>
+    }
+  ],
+  <span class="key">"next_cursor"</span>: <span class="str">"cur_01HXK9A0DZRKM1NO"</span>,
+  <span class="key">"has_more"</span>: <span class="bool">true</span>
+}</pre>
+          </div>
+        </div>
+
+        <!-- ── POST /agents/{id}/stake ── -->
+        <div class="api-panel" id="ep-stake-post">
+          <div class="api-endpoint-header">
+            <span class="method-badge method-post" style="font-size:11px; padding:4px 10px;">POST</span>
+            <h2 class="api-endpoint-title">Add Stake</h2>
+          </div>
+          <p class="api-endpoint-desc">Increase the ORBS stake backing an agent. Higher stake improves reputation weight and signals stronger commitment. Stake is subject to slashing if the agent behaves maliciously or violates protocol rules.</p>
+          <div class="api-url-bar">
+            <span class="api-url-method" style="color:#6482ff;">POST</span>
+            <span class="api-url-text"><span class="base">https://api.orbsagent.xyz/v1</span>/agents/<span class="param">{agent_id}</span>/stake</span>
+          </div>
+          <p class="api-section-title">Request Body</p>
+          <table class="api-table">
+            <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td>amount<span class="required">required</span></td><td>string</td><td>ORBS amount to add as decimal string. Minimum: <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">"100.00"</code></td></tr>
+              <tr><td>lock_period_days<span class="optional">optional</span></td><td>integer</td><td>Lock duration in days. Longer locks yield higher reputation weight multiplier. Options: <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">30</code>, <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">90</code>, <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">365</code></td></tr>
+              <tr><td>signature<span class="required">required</span></td><td>string</td><td>EIP-712 signature from owner address.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- ── GET /agents/{id}/stake ── -->
+        <div class="api-panel" id="ep-stake-get">
+          <div class="api-endpoint-header">
+            <span class="method-badge method-get" style="font-size:11px; padding:4px 10px;">GET</span>
+            <h2 class="api-endpoint-title">Get Stake Position</h2>
+          </div>
+          <p class="api-endpoint-desc">Returns the complete stake position for an agent including locked amounts, unbonding schedules, slashing history, and the effective reputation weight multiplier applied to the current score.</p>
+          <div class="api-url-bar">
+            <span class="api-url-method" style="color:#00c864;">GET</span>
+            <span class="api-url-text"><span class="base">https://api.orbsagent.xyz/v1</span>/agents/<span class="param">{agent_id}</span>/stake</span>
+          </div>
+          <p class="api-section-title">Response &nbsp;·&nbsp; 200 OK</p>
+          <div class="code-block">
+            <div class="code-block-header"><span class="code-block-lang">JSON</span><button class="code-copy-btn">Copy</button></div>
+            <pre>{
+  <span class="key">"agent_id"</span>: <span class="str">"orbs_ag_7x9mKpLqNvR3wYs"</span>,
+  <span class="key">"total_staked_orbs"</span>: <span class="str">"50000.00"</span>,
+  <span class="key">"total_usd_value"</span>: <span class="str">"12400.00"</span>,
+  <span class="key">"reputation_multiplier"</span>: <span class="num">1.42</span>,
+  <span class="key">"positions"</span>: [
+    {
+      <span class="key">"amount_orbs"</span>: <span class="str">"30000.00"</span>,
+      <span class="key">"lock_period_days"</span>: <span class="num">365</span>,
+      <span class="key">"locked_until"</span>: <span class="num">1782720000</span>,
+      <span class="key">"multiplier"</span>: <span class="num">1.8</span>
+    },
+    {
+      <span class="key">"amount_orbs"</span>: <span class="str">"20000.00"</span>,
+      <span class="key">"lock_period_days"</span>: <span class="num">90</span>,
+      <span class="key">"locked_until"</span>: <span class="num">1759056000</span>,
+      <span class="key">"multiplier"</span>: <span class="num">1.2</span>
+    }
+  ],
+  <span class="key">"slashing_history"</span>: [
+    {
+      <span class="key">"amount_slashed"</span>: <span class="str">"500.00"</span>,
+      <span class="key">"reason"</span>: <span class="str">"malicious_front_run"</span>,
+      <span class="key">"tx_hash"</span>: <span class="str">"0x7c3f...a1b2"</span>,
+      <span class="key">"slashed_at"</span>: <span class="num">1748700000</span>
+    }
+  ]
+}</pre>
+          </div>
+        </div>
+
+        <!-- ── GET /trust/query ── -->
+        <div class="api-panel" id="ep-trust-query">
+          <div class="api-endpoint-header">
+            <span class="method-badge method-get" style="font-size:11px; padding:4px 10px;">GET</span>
+            <h2 class="api-endpoint-title">Query Trust</h2>
+          </div>
+          <p class="api-endpoint-desc">The primary integration endpoint. Returns a binary trust decision plus full scoring context for a given agent ID. Optimized for low-latency integration into wallets, protocols, and interfaces. Cached at edge nodes globally.</p>
+          <div class="api-url-bar">
+            <span class="api-url-method" style="color:#00c864;">GET</span>
+            <span class="api-url-text"><span class="base">https://api.orbsagent.xyz/v1</span>/trust/query</span>
+          </div>
+          <div class="api-two-col">
+            <div class="api-info-card">
+              <p class="api-info-card-label">Latency (p99)</p>
+              <p class="api-info-card-value">38ms global avg. Edge-cached in 22 regions. Cache TTL: 60 seconds.</p>
+            </div>
+            <div class="api-info-card">
+              <p class="api-info-card-label">Rate Limit</p>
+              <p class="api-info-card-value">1,000 req/min standard. Unlimited for protocol-level integrations. Contact us.</p>
+            </div>
+          </div>
+          <p class="api-section-title">Query Parameters</p>
+          <table class="api-table">
+            <thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td>agent_id<span class="required">required</span></td><td>string</td><td>The agent ID to query trust for.</td></tr>
+              <tr><td>min_score<span class="optional">optional</span></td><td>integer</td><td>Minimum reputation score to consider trusted. Default: <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">500</code></td></tr>
+              <tr><td>min_stake<span class="optional">optional</span></td><td>string</td><td>Minimum ORBS stake required. Default: <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">"0"</code></td></tr>
+              <tr><td>require_tier<span class="optional">optional</span></td><td>string</td><td>Minimum tier: <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">emerging</code>, <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">verified</code>, <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">elite</code></td></tr>
+            </tbody>
+          </table>
+          <p class="api-section-title">Response &nbsp;·&nbsp; 200 OK</p>
+          <div class="code-block">
+            <div class="code-block-header"><span class="code-block-lang">JSON</span><button class="code-copy-btn">Copy</button></div>
+            <pre>{
+  <span class="key">"agent_id"</span>: <span class="str">"orbs_ag_7x9mKpLqNvR3wYs"</span>,
+  <span class="key">"trusted"</span>: <span class="bool">true</span>,
+  <span class="key">"score"</span>: <span class="num">847</span>,
+  <span class="key">"tier"</span>: <span class="str">"verified"</span>,
+  <span class="key">"stake_orbs"</span>: <span class="str">"50000.00"</span>,
+  <span class="key">"passed_checks"</span>: {
+    <span class="key">"min_score"</span>: <span class="bool">true</span>,
+    <span class="key">"min_stake"</span>: <span class="bool">true</span>,
+    <span class="key">"tier"</span>: <span class="bool">true</span>,
+    <span class="key">"not_revoked"</span>: <span class="bool">true</span>,
+    <span class="key">"not_suspended"</span>: <span class="bool">true</span>
+  },
+  <span class="key">"queried_at"</span>: <span class="num">1751301234</span>,
+  <span class="key">"cache_hit"</span>: <span class="bool">true</span>,
+  <span class="key">"latency_ms"</span>: <span class="num">12</span>
+}</pre>
+          </div>
+        </div>
+
+        <!-- ── POST /trust/verify ── -->
+        <div class="api-panel" id="ep-trust-verify">
+          <div class="api-endpoint-header">
+            <span class="method-badge method-post" style="font-size:11px; padding:4px 10px;">POST</span>
+            <h2 class="api-endpoint-title">Batch Verify Trust</h2>
+          </div>
+          <p class="api-endpoint-desc">Verify trust for multiple agents in a single request. Accepts up to 50 agent IDs per call. Each result is evaluated independently against your supplied trust thresholds. Ideal for portfolio managers and multi-agent orchestrators.</p>
+          <div class="api-url-bar">
+            <span class="api-url-method" style="color:#6482ff;">POST</span>
+            <span class="api-url-text"><span class="base">https://api.orbsagent.xyz/v1</span>/trust/verify</span>
+          </div>
+          <p class="api-section-title">Request Body</p>
+          <table class="api-table">
+            <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td>agent_ids<span class="required">required</span></td><td>string[]</td><td>Array of agent IDs to verify. Maximum 50 per request.</td></tr>
+              <tr><td>min_score<span class="optional">optional</span></td><td>integer</td><td>Global minimum score threshold applied to all agents. Default: <code style="font-family:'Courier New',monospace;color:#6482ff;font-size:11px;">500</code></td></tr>
+              <tr><td>require_tier<span class="optional">optional</span></td><td>string</td><td>Minimum tier requirement applied globally.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- ── GET /health ── -->
+        <div class="api-panel" id="ep-health">
+          <div class="api-endpoint-header">
+            <span class="method-badge method-get" style="font-size:11px; padding:4px 10px;">GET</span>
+            <h2 class="api-endpoint-title">Health Check</h2>
+          </div>
+          <p class="api-endpoint-desc">Returns the current operational status of all ORBS API subsystems. Use this endpoint to monitor API availability and subsystem health before making critical calls. No authentication required.</p>
+          <div class="api-url-bar">
+            <span class="api-url-method" style="color:#00c864;">GET</span>
+            <span class="api-url-text"><span class="base">https://api.orbsagent.xyz/v1</span>/health</span>
+          </div>
+          <p class="api-section-title">Response &nbsp;·&nbsp; 200 OK</p>
+          <div class="code-block">
+            <div class="code-block-header"><span class="code-block-lang">JSON</span><button class="code-copy-btn">Copy</button></div>
+            <pre>{
+  <span class="key">"status"</span>: <span class="str">"operational"</span>,
+  <span class="key">"version"</span>: <span class="str">"1.0.0"</span>,
+  <span class="key">"timestamp"</span>: <span class="num">1751301234</span>,
+  <span class="key">"subsystems"</span>: {
+    <span class="key">"api"</span>: <span class="str">"operational"</span>,
+    <span class="key">"registry"</span>: <span class="str">"operational"</span>,
+    <span class="key">"reputation_engine"</span>: <span class="str">"operational"</span>,
+    <span class="key">"staking_contract"</span>: <span class="str">"operational"</span>,
+    <span class="key">"trust_query_cache"</span>: <span class="str">"operational"</span>,
+    <span class="key">"chain_indexer_ethereum"</span>: <span class="str">"operational"</span>,
+    <span class="key">"chain_indexer_solana"</span>: <span class="str">"operational"</span>,
+    <span class="key">"chain_indexer_base"</span>: <span class="str">"operational"</span>
+  },
+  <span class="key">"uptime_30d"</span>: <span class="num">99.97</span>,
+  <span class="key">"avg_latency_ms"</span>: <span class="num">38</span>
+}</pre>
+          </div>
+        </div>
+
+      </div><!-- /.api-main -->
+    </div><!-- /.api-body -->
+  </div><!-- /.api-overlay -->
+
+  <script>
+    // Custom cursor
+    const cursor = document.getElementById('cursor');
+    const cursorGlow = document.getElementById('cursorGlow');
+    let mouseX = 0, mouseY = 0;
+    let glowX = 0, glowY = 0;
+
+    document.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+      cursor.style.left = mouseX + 'px';
+      cursor.style.top = mouseY + 'px';
+    });
+
+    (function animateGlow() {
+      glowX += (mouseX - glowX) * 0.08;
+      glowY += (mouseY - glowY) * 0.08;
+      cursorGlow.style.left = glowX + 'px';
+      cursorGlow.style.top = glowY + 'px';
+      requestAnimationFrame(animateGlow);
+    })();
+
+    document.querySelectorAll('a, button, .how-card').forEach(el => {
+      el.addEventListener('mouseenter', () => {
+        cursor.style.width = '20px';
+        cursor.style.height = '20px';
+        cursor.style.opacity = '0.5';
+      });
+      el.addEventListener('mouseleave', () => {
+        cursor.style.width = '12px';
+        cursor.style.height = '12px';
+        cursor.style.opacity = '1';
+      });
+    });
+
+    // Fade-in on scroll
+    const fadeEls = document.querySelectorAll('.fade-in');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) entry.target.classList.add('visible');
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -60px 0px' });
+    fadeEls.forEach(el => observer.observe(el));
+
+    // Trigger hero immediately
+    window.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.hero .fade-in').forEach((el, i) => {
+        setTimeout(() => el.classList.add('visible'), 100 + i * 150);
+      });
+    });
+
+    // ── Whitepaper Modal ───────────────────────────
+    const wpOverlay = document.getElementById('wpOverlay');
+    const docsBtn   = document.getElementById('docsBtn');
+    const wpClose   = document.getElementById('wpClose');
+
+    docsBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      wpOverlay.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    });
+
+    wpClose.addEventListener('click', () => {
+      wpOverlay.classList.remove('open');
+      document.body.style.overflow = '';
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        wpOverlay.classList.remove('open');
+        document.body.style.overflow = '';
+      }
+    });
+
+    // Smooth scroll for in-paper TOC links
+    document.querySelectorAll('.wp-toc a').forEach(a => {
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        const target = document.querySelector(a.getAttribute('href'));
+        if (target) {
+          document.getElementById('wpBody').scrollTo({
+            top: target.offsetTop - 24,
+            behavior: 'smooth'
+          });
+        }
+      });
+    });
+
+    // ── API Modal ──────────────────────────────────
+    const apiOverlay = document.getElementById('apiOverlay');
+    const apiBtn     = document.getElementById('apiBtn');
+    const apiClose   = document.getElementById('apiClose');
+
+    apiBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      apiOverlay.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    });
+
+    apiClose.addEventListener('click', () => {
+      apiOverlay.classList.remove('open');
+      document.body.style.overflow = '';
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        apiOverlay.classList.remove('open');
+        document.body.style.overflow = '';
+      }
+    });
+
+    // Sidebar endpoint switching
+    document.querySelectorAll('.api-endpoint-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const panelId = btn.dataset.panel;
+
+        // Toggle sidebar active
+        document.querySelectorAll('.api-endpoint-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        // Toggle panel
+        document.querySelectorAll('.api-panel').forEach(p => p.classList.remove('active'));
+        const panel = document.getElementById(panelId);
+        if (panel) {
+          panel.classList.add('active');
+          document.querySelector('.api-main').scrollTop = 0;
+        }
+      });
+    });
+
+    // Response tab switching
+    document.querySelectorAll('.api-resp-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const respId = tab.dataset.resp;
+        const siblings = tab.parentElement.querySelectorAll('.api-resp-tab');
+        siblings.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        // Find the code-block sibling and switch panels within it
+        const codeBlock = tab.closest('.api-response-tabs').nextElementSibling;
+        codeBlock.querySelectorAll('.resp-panel').forEach(p => p.classList.remove('active'));
+        const target = document.getElementById(respId);
+        if (target) target.classList.add('active');
+      });
+    });
+
+    // Copy button
+    document.querySelectorAll('.code-copy-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const pre = btn.closest('.code-block').querySelector('pre');
+        navigator.clipboard.writeText(pre.innerText).then(() => {
+          const orig = btn.textContent;
+          btn.textContent = 'Copied';
+          btn.style.color = '#00c864';
+          setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 1500);
+        });
+      });
+    });
+  </script>
+</body>
+</html>
